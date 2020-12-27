@@ -25,6 +25,16 @@ class ContactController: UIViewController {
         }
     }
 
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+
+        view.subviews
+            .compactMap { $0 as? UIStackView }
+            .flatMap(\.arrangedSubviews)
+            .compactMap { $0 as? UIStackView }
+            .forEach { $0.spacing = 8 }
+    }
+
     private func setup() {
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveTap))
     }
