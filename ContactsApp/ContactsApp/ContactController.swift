@@ -42,8 +42,8 @@ class ContactController: UIViewController {
     private func setup(contact: Contact) {
         nameField.text = contact.name
         phoneField.text = contact.phoneNumber
-        childLabel.text = "Child: \(contact.child?.name ?? "None")"
-        parentLabel.text = "Parent: \(contact.parent?.name ?? "None")"
+        childLabel.text = "Child: \(contact.child?.name ?? "No child")"
+        parentLabel.text = "Parent: \(contact.parent?.name ?? "No parent")"
         friendsLabel.text = "Friends: \(contact.friends?.count ?? 0)"
     }
 
@@ -72,15 +72,48 @@ class ContactController: UIViewController {
     }
 
     @IBAction private func editChildTap() {
+        let controller = getControllerFromStoryboard() as! ContactSelectorController
+        controller.mainContact = getOrCreateContact()
+        controller.isSingleSelect = true
+        if let child = getOrCreateContact().child {
+            controller.setSelectedContacts([child])
+        }
+        // controller.isFromChild = true
+        controller.close = { [weak self] selectedContacts in
+            self?.getOrCreateContact().child = selectedContacts.first
+            selectedContacts.first?.parent = self?.getOrCreateContact()
+            
+            self?.navigationController?.popViewController(animated: true)
+        }
+        navigationController?.pushViewController(controller, animated: true)
     }
 
     @IBAction private func editParentTap() {
+        let controller = getControllerFromStoryboard() as! ContactSelectorController
+        controller.mainContact = getOrCreateContact()
+        controller.isSingleSelect = true
+        if let parent = getOrCreateContact().parent {
+            controller.setSelectedContacts([parent])
+        }
+        // controller.isFromParent = true
+        controller.close = { [weak self] selectedContacts in
+            self?.getOrCreateContact().parent = selectedContacts.first
+            selectedContacts.first?.child = self?.getOrCreateContact()
+            self?.navigationController?.popViewController(animated: true)
+        }
+        navigationController?.pushViewController(controller, animated: true)
     }
 
     @IBAction private func deleteChildTap() {
+        getOrCreateContact().child?.parent = nil
+        getOrCreateContact().child = nil
+        setup(contact: getOrCreateContact())
     }
 
     @IBAction private func deleteParentTap() {
+        getOrCreateContact().parent?.child = nil
+        getOrCreateContact().parent = nil
+        setup(contact: getOrCreateContact())
     }
 
     @IBAction private func editFriendsTap() {
@@ -88,9 +121,17 @@ class ContactController: UIViewController {
 
         let controller: ContactSelectorController = storyboard.instantiateViewController(identifier: "ContactSelectorController")
         controller.mainContact = getOrCreateContact()
-        controller.close = {
-            self.navigationController?.popViewController(animated: true)
+        controller.setSelectedContacts(getOrCreateContact().friends?.allObjects as? [Contact] ?? [])
+        controller.close = { [weak self] selectedContacts in
+            self?.getOrCreateContact().friends = NSSet(array: selectedContacts)
+            self?.navigationController?.popViewController(animated: true)
         }
         navigationController?.pushViewController(controller, animated: true)
+    }
+    
+    private func getControllerFromStoryboard() -> UIViewController {
+        guard let storyboard = storyboard else { return UIViewController()}
+        let controller: ContactSelectorController = storyboard.instantiateViewController(identifier: "ContactSelectorController")
+        return controller
     }
 }

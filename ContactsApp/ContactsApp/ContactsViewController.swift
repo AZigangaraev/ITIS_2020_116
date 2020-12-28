@@ -30,7 +30,6 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
         setup()
     }
 
@@ -83,6 +82,14 @@ class ContactsViewController: UIViewController, UITableViewDataSource, UITableVi
         }
         controller.contact = fetchedResultsController.object(at: indexPath)
         navigationController?.pushViewController(controller, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let contact = fetchedResultsController.object(at: indexPath)
+            AppDelegate.shared.coreDataStack.viewContext.delete(contact)
+            setup()
+        }
     }
 }
 

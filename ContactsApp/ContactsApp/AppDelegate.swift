@@ -35,6 +35,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didDiscardSceneSessions sceneSessions: Set<UISceneSession>
     ) {
+        coreDataStack.saveViewContext()
     }
 
     // MARK: Core Data stack
