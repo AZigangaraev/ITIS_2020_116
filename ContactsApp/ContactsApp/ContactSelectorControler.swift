@@ -10,7 +10,8 @@ import CoreData
 
 class ContactSelectorController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     var mainContact: Contact?
-    var close: (() -> Void)?
+    var close: (([Contact]) -> Void)?
+    var isSingleSelect: Bool = false
 
     private var allContacts: [Contact] = []
     private var selectedContacts: [Contact] = []
@@ -31,7 +32,6 @@ class ContactSelectorController: UIViewController, UITableViewDataSource, UITabl
         fetchRequest.predicate = NSPredicate(format: "SELF != %@", contact)
         do {
             allContacts = try AppDelegate.shared.coreDataStack.viewContext.fetch(fetchRequest)
-            selectedContacts = mainContact?.friends?.allObjects as? [Contact] ?? []
             tableView.reloadData()
         } catch {
             print("Could not fetch contacts: \(error)")
@@ -39,10 +39,7 @@ class ContactSelectorController: UIViewController, UITableViewDataSource, UITabl
     }
 
     @objc private func saveTap() {
-        guard let contact = mainContact else { return }
-
-        contact.friends = NSSet(array: selectedContacts)
-        close?()
+        close?(selectedContacts)
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -75,10 +72,23 @@ class ContactSelectorController: UIViewController, UITableViewDataSource, UITabl
 
         let contact = allContacts[indexPath.row]
         if let index = selectedContacts.firstIndex(of: contact) {
-            selectedContacts.remove(at: index)
+            if isSingleSelect {
+                return
+            } else {
+                selectedContacts.remove(at: index)
+            }
         } else {
-            selectedContacts.append(contact)
+            if isSingleSelect {
+                selectedContacts = [contact]
+                tableView.reloadData()
+            } else {
+                selectedContacts.append(contact)
+                tableView.reloadRows(at: [ indexPath ], with: .automatic)
+            }
         }
-        tableView.reloadRows(at: [ indexPath ], with: .automatic)
+    }
+    
+    func setSelectedContacts(_ selectedContacts: [Contact]) {
+        self.selectedContacts = selectedContacts
     }
 }
